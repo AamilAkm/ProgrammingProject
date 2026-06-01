@@ -19,6 +19,8 @@ def student_generator(env, nurses):
         yield env.timeout(random.randint(1, 3))  # Time between student arrivals
         env.process(sickbay(env, f'Student {student_id}', nurses))
         student_id += 1
+        if student_id > 10:  # Limit the number of students for the simulation
+            break
 
 
 # Set up the simulation environment
