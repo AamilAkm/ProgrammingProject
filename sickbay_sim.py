@@ -22,8 +22,12 @@ class sickbay_simulation:
         self.env = env
         self.nurses = simpy.PriorityResource(env, capacity=num_nurses)
         self.simulation_summary = ''
+        self.untreated_students = 0
+        self.treated_students = 0
+
         self.env.process(self.student_generator())
         self.env.run()
+
 
     def print_outcome(self, student):
 
@@ -78,11 +82,13 @@ class sickbay_simulation:
                 treatment_time = random.randint(5, 15)
                 yield self.env.timeout(treatment_time)  # Time taken to attend to the student
                 student.treated = True
+                self.treated_students += 1
                 student.leave_time = self.env.now
                 self.print_status(student, 'left')
             else:
                 student.wait_time = self.env.now - student.arrival_time
                 student.leave_time = self.env.now
+                self.untreated_students += 1
                 self.print_status(student, 'left')
             
         self.print_outcome(student)
@@ -109,3 +115,6 @@ class sickbay_simulation:
 sickbay = sickbay_simulation(simpy.Environment(), num_nurses=2)
 print(sickbay.simulation_summary)
 
+print(f'\nTotal students: {sickbay.treated_students + sickbay.untreated_students}')
+print(f'Treated students: {sickbay.treated_students}')
+print(f'Untreated students: {sickbay.untreated_students}')
