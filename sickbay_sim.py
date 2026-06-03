@@ -51,18 +51,16 @@ class sickbay_simulation:
 
     def print_status(self, student, status):
         if status == 'arrived':
-            print ('-' * 80)
-            print(f'{student.name} arrives at the sickbay at time {student.arrival_time}')
-            print ('-' * 80)
+            print(f'--> {student.name} arrives at the sickbay at time {student.arrival_time}')
 
         if status == 'attended':
-            print(f'{student.name} is being attended to by a nurse at time {student.arrival_time + student.wait_time} (waited {student.wait_time})')
+            print(f'+ {student.name} is being attended to by a nurse at time {student.arrival_time + student.wait_time} (waited {student.wait_time})')
 
         if status == 'left':
             if student.treated:
-                print(f'{student.name} leaves the sickbay at time {student.leave_time}')
+                print(f'<-- {student.name} leaves the sickbay at time {student.leave_time}')
             else:
-                print(f'{student.name} leaves the sickbay at time {student.leave_time} (waited too long | waited {student.wait_time})')
+                print(f'<-- {student.name} leaves the sickbay at time {student.leave_time} (waited too long | waited {student.wait_time})')
         
 
 
