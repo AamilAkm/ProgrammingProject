@@ -5,7 +5,7 @@ import random
 
 #Variables – number of nurses | wait time in sickbay | students in queue | urgent cases | nurses occupied with an urgent case
 
-MAX_WAIT_TIME = 20  # Maximum time a student is willing to wait
+MAX_WAIT_TIME = 25  # Maximum time a student is willing to wait
 
 def sickbay(env, name, nurses):
     arrival_time = env.now
@@ -23,33 +23,34 @@ def sickbay(env, name, nurses):
             print(f'{name} leaves the sickbay at {env.now} (waited too long)')
 
 def student_generator(env, nurses):
+    urgent_case_id = 1
     student_id = 1
+
     while True:
-        yield env.timeout(random.randint(1, 3))  # Time between student arrivals
-        env.process(sickbay(env, f'Student {student_id}', nurses))  # Regular students have lower priority
-        student_id += 1
-        if student_id > 25:  # Limit the number of students for the simulation
-            break
-        
-def urgent_case_generator(env, nurses):
-    case_id = 1
-    while True:
-        yield env.timeout(random.randint(10, 20))  # Time between urgent cases
-        print(f'An urgent case arrives at {env.now}')
-        with nurses.request() as request:  # Urgent cases have higher priority
-            yield request
-            print(f'An urgent case is being attended to by a nurse at {env.now}')
-            yield env.timeout(random.randint(10, 20))  # Time taken to attend to the urgent case
-            print(f'An urgent case leaves the sickbay at {env.now}')
-            case_id += 1
-            if case_id > 5:  # Limit the number of urgent cases for the simulation
+        urgent_random = random.randint(1, 10)
+        if urgent_random <= 2:  # 20% chance of an urgent case
+            env.process(urgent_case_generator(env, urgent_case_id, nurses))
+            urgent_case_id += 1
+        else:
+            yield env.timeout(random.randint(1, 3))  # Time between student arrivals
+            env.process(sickbay(env, f'Student {student_id}', nurses))  # Regular students have lower priority
+            student_id += 1
+            if student_id > 25:  # Limit the number of students for the simulation
                 break
+        
+def urgent_case_generator(env, urgent_case_id, nurses):
+    print(f'An urgent case {urgent_case_id} arrives at {env.now}')
+    with nurses.request() as request:  # Urgent cases have higher priority
+        yield request
+        print(f'An urgent case {urgent_case_id} is being attended to by a nurse at {env.now}')
+        yield env.timeout(random.randint(10, 20))  # Time taken to attend to the urgent case
+        print(f'An urgent case {urgent_case_id} leaves the sickbay at {env.now}')
+
 
 
 # Set up the simulation environment
 env = simpy.Environment()
 nurses = simpy.Resource(env, capacity=2)  # Number of nurses available
 env.process(student_generator(env, nurses))
-env.process(urgent_case_generator(env, nurses))  # Urgent cases have the highest priority
 env.run()  # Run the simulation for a certain time period
     
