@@ -22,13 +22,22 @@ class student:
 class sickbay_simulation:
 
     #Initializing the simulation
-    def __init__(self, env, num_nurses):
+    def __init__(self, env):
         self.env = env
-        self.nurses = simpy.PriorityResource(env, capacity=num_nurses)
+
+        #Asking user for the number of nurses
+        self.num_nurses = self.ask_num_nurses()
+        self.nurses = simpy.PriorityResource(env, capacity=self.num_nurses)
+
+        #Asking user for the number of students
+        self.num_students = self.ask_num_students()
+
         self.urgent_case_id = 1
         self.student_id = 1
         self.untreated_students = 0
         self.treated_students = 0
+
+        print(f'\n{'Timeline':=^60}')
 
         open('simulation_summary.txt', 'w').close() #Removing previous data 
 
@@ -77,7 +86,7 @@ class sickbay_simulation:
                 sick_student = student(f'Student {self.student_id}', self.student_id, priority=1)
                 self.env.process(self.sickbay(sick_student))  # Pass the student object
                 self.student_id += 1
-                if self.student_id > 25:  # Limit the number of students for the simulation
+                if (self.student_id + self.urgent_case_id) > (self.num_students + 1):  # Limit the number of students for the simulation
                     break
 
 
@@ -147,7 +156,7 @@ class sickbay_simulation:
 
     #Asking user if they want to see the student list summary
     def print_student_list_summary(self):
-        print("\n" + '=' * 60)
+        print('=' * 60)
         user_input = input('\nDo you want to see the student list summary? (yes/no): ')
         if user_input.lower() == 'yes':
             print(f'\n{f'Student List Summary':=^60}')
@@ -159,14 +168,57 @@ class sickbay_simulation:
         print(f'{"SIMULATION SUMMARY":^50}')
         print('=' * 50)
 
-        print(f'{"Total students:":<25}{sickbay.treated_students + sickbay.untreated_students:>25}')
-        print(f'{"Total urgent cases:":<25}{sickbay.urgent_case_id - 1:>25}')
-        print(f'{"Treated students:":<25}{sickbay.treated_students:>25}')
-        print(f'{"Untreated students:":<25}{sickbay.untreated_students:>25}')
+        print(f'{"Number of nurses:":<25}{self.num_nurses:>25}')
+        print(f'{"Total students:":<25}{self.treated_students + self.untreated_students:>25}')
+        print(f'{"Total urgent cases:":<25}{self.urgent_case_id - 1:>25}')
+        print(f'{"Treated students:":<25}{self.treated_students:>25}')
+        print(f'{"Untreated students:":<25}{self.untreated_students:>25}')
         print('=' * 50)
 
+    def ask_num_nurses(self):
+        while True:
+            try:
+                user_input = input('\nHow many nurses do you want to simulate? (1-5): ')
+                num_nurses = int(user_input)
+                if num_nurses >= 1 and num_nurses <= 5:
+                    return num_nurses
+                else:
+                    print('Invalid input. Please enter a number between 1 and 5.')
+            except ValueError:
+                print('Invalid input. Please enter a number between 1 and 5.')
+
+    def ask_num_students(self):
+
+            user_input_1 = input('\nDo you want to set the number of students? (yes/no): ')
+
+            if user_input_1.lower() == 'yes':
+                while True:
+                    user_input_2 = input('\nHow many students do you want to simulate? (1-100): ')
+                    try:
+                        num_students = int(user_input_2)
+                        if num_students >= 1 and num_students <= 100:
+                            return num_students
+                        else:
+                            print('Invalid input. Please enter a number between 1 and 100.')
+                    except ValueError:
+                        print('Invalid input. Please enter a number between 1 and 100.')
+                        
+            else:
+                print('\nHow busy do you want the sickbay to be? ')
+                while True:
+                    user_input_3 = input('\n(low - 10 students | medium - 25 students | high - 50 students): ')
+                    if user_input_3.lower() == 'low':
+                        return 10
+                    elif user_input_3.lower() == 'medium':
+                        return 25
+                    elif user_input_3.lower() == 'high':
+                        return 50
+                    else:
+                        print('Invalid input')
 
 
-sickbay = sickbay_simulation(simpy.Environment(), num_nurses=2)
+
+print(f'\n{f'WELCOME TO THE SICKBAY SIMULATION':=^60}') 
+sickbay = sickbay_simulation(simpy.Environment())
 sickbay.print_student_list_summary()
 sickbay.print_simulation_summary()
