@@ -26,17 +26,16 @@ class sickbay_simulation:
         self.untreated_students = 0
         self.treated_students = 0
 
-        self.summary_file = open('simulation_summary.txt', 'w') #Save Simulation summary
+        open('simulation_summary.txt', 'w').close() #Removing previous data 
 
         self.env.process(self.student_generator())
         self.env.run()
 
 
     def simulation_summary(self, student):
-        text = self.summary_file
+        text = open('simulation_summary.txt', 'a') 
 
-        patient_text = f"PATIENT - {student.name}"
-        text.write(f'\n{patient_text.center(60, "=")}\n')
+        text.write(f'\n{f'PATIENT - {student.name}':=^60}')
 
         text.write(f'\n{f'Timeline':-^60}')
         text.write(f'\n   Arrival{" "*45}{student.arrival_time}')
@@ -53,17 +52,18 @@ class sickbay_simulation:
             text.write(f'\n   Did not receive treatment (timeout)')
             text.write(f'\n   Max wait time exceeded:{" "*29}{student.wait_time}')
             
-        text.write(f'\n' + '-' * 60)
-        text.write(f'\n\n' + '=' * 60 + '\n')
+        text.write(f'\n' + '=' * 60 + '\n')
+
+        text.close()
     
     def read_summary(self):
+        line = 'a'
         file = open('simulation_summary.txt', 'r')
-        line = file.readline()
         while line != '':
-            print(line)
             line = file.readline()
-            
+            print(line)
         file.close()
+        
         
         
 
