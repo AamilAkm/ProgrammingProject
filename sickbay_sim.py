@@ -17,7 +17,11 @@ class student:
         self.leave_time = None
         self.treated = False
 
+
+
 class sickbay_simulation:
+
+    #Initializing the simulation
     def __init__(self, env, num_nurses):
         self.env = env
         self.nurses = simpy.PriorityResource(env, capacity=num_nurses)
@@ -32,56 +36,7 @@ class sickbay_simulation:
         self.env.run()
 
 
-    def simulation_summary(self, student):
-        text = open('simulation_summary.txt', 'a') 
-
-        text.write(f'\n{f'PATIENT - {student.name}':=^60}')
-
-        text.write(f'\n{f'Timeline':-^60}')
-        text.write(f'\n   Arrival{" "*45}{student.arrival_time}')
-        text.write(f'\n   Wait Time:{" "*42}{student.wait_time}')
-        text.write(f'\n   Departure:{" "*42}{student.leave_time}')
-
-        # Status
-        text.write(f'\n{'Status':-^60}')
-        if student.treated:
-            text.write(f'\n   Successfully treated')
-            text.write(f'\n   Attended at:{" "*40}{student.arrival_time + student.wait_time}')
-            text.write(f'\n   Treatment duration:{" "*33}{student.leave_time - (student.arrival_time + student.wait_time)}')
-        else:
-            text.write(f'\n   Did not receive treatment (timeout)')
-            text.write(f'\n   Max wait time exceeded:{" "*29}{student.wait_time}')
-            
-        text.write(f'\n' + '=' * 60 + '\n')
-
-        text.close()
-    
-    def read_summary(self):
-        line = 'a'
-        file = open('simulation_summary.txt', 'r')
-        while line != '':
-            line = file.readline()
-            print(line)
-        file.close()
-        
-        
-        
-
-    def print_status(self, student, status):
-        if status == 'arrived':
-            print(f'--> {student.name} arrives at the sickbay at time {student.arrival_time}')
-
-        if status == 'attended':
-            print(f'+ {student.name} is being attended to by a nurse at time {student.arrival_time + student.wait_time} (waited {student.wait_time})')
-
-        if status == 'left':
-            if student.treated:
-                print(f'<-- {student.name} leaves the sickbay at time {student.leave_time}')
-            else:
-                print(f'<-- {student.name} leaves the sickbay at time {student.leave_time} (waited too long | waited {student.wait_time})')
-        
-
-
+    #Sickbay process
     def sickbay(self, student):
         """Process a student through the sickbay."""
         student.arrival_time = self.env.now
@@ -105,8 +60,10 @@ class sickbay_simulation:
                 self.untreated_students += 1
                 self.print_status(student, 'left')
             
-        self.simulation_summary(student)
+        self.student_list_summary(student)
 
+
+    #Generating students
     def student_generator(self):
 
         while True:
@@ -122,16 +79,94 @@ class sickbay_simulation:
                 self.student_id += 1
                 if self.student_id > 25:  # Limit the number of students for the simulation
                     break
+
+
+    #Printing simulation timeline
+    def print_status(self, student, status):
+
+        #color codes for printing
+        RED = "\033[91m"
+        GREEN = "\033[92m"
+        YELLOW = "\033[93m"
+        BLUE   = "\033[34m"
+        RESET = "\033[0m"
+        
+        if status == 'arrived':
+            if student.priority == 0:
+                print(f'{RED}[>]  {student.name} arrives at the sickbay at time {student.arrival_time}{RESET}')
+            else:
+                print(f'[>]  {student.name} arrives at the sickbay at time {student.arrival_time}')
+
+        if status == 'attended':
+            print(f'{GREEN}[+]  {student.name} is being attended to by a nurse at time {student.arrival_time + student.wait_time} (waited {student.wait_time}{RESET})')
+
+        if status == 'left':
+            if student.treated:
+                print(f'{BLUE}[<]  {student.name} leaves the sickbay at time {student.leave_time}{RESET}')
+            else:
+                print(f'{YELLOW}[X]  {student.name} leaves the sickbay at time {student.leave_time} (waited too long | waited {student.wait_time}{RESET})')
+
+
+
+    #writing student list summary to text file
+    def student_list_summary(self, student):
+        text = open('simulation_summary.txt', 'a') 
+
+        text.write(f'\n{f'PATIENT - {student.name}':=^50}')
+
+        #Timeline
+        text.write(f'\n{f'Timeline':-^50}')
+        text.write(f'\n{'Arrival:':<25}{student.arrival_time:>25}')
+        text.write(f'\n{'Wait Time:':<25}{student.wait_time:>25}')
+        text.write(f'\n{'Departure:':<25}{student.leave_time:>25}')
+
+        # Status
+        text.write(f'\n{'Status':-^50}')
+        if student.treated:
+            text.write(f'\nSuccessfully treated')
+            text.write(f'\n{'Attended at:':<25}{student.arrival_time + student.wait_time:>25}')
+            text.write(f'\n{'Treatment duration:':<25}{student.leave_time - (student.arrival_time + student.wait_time):>25}')
+        else:
+            text.write(f'\nDid not receive treatment (timeout)')
+            text.write(f'\n{'Max wait time exceeded:':<25}{student.wait_time:>25}')
+            
+        text.write(f'\n' + '=' * 50 + '\n')
+
+        text.close()
     
-    def print_summary(self):
-        user_input = input('\nDo you want to see the simulation summary? (yes/no): ')
+
+    #Reading the student list summary
+    def read_summary(self):
+        line = 'a'
+        file = open('simulation_summary.txt', 'r')
+        while line != '':
+            line = file.readline()
+            print(line)
+        file.close()
+        
+
+    #Asking user if they want to see the student list summary
+    def print_student_list_summary(self):
+        print("\n" + '=' * 60)
+        user_input = input('\nDo you want to see the student list summary? (yes/no): ')
         if user_input.lower() == 'yes':
+            print(f'\n{f'Student List Summary':=^60}')
             self.read_summary()
 
-sickbay = sickbay_simulation(simpy.Environment(), num_nurses=2)
-sickbay.print_summary()
+    #Printing the simulation summary
+    def print_simulation_summary(self):
+        print('\n' + '=' * 50)
+        print(f'{"SIMULATION SUMMARY":^50}')
+        print('=' * 50)
 
-print(f'\nTotal students: {sickbay.treated_students + sickbay.untreated_students}')
-print(f'Total urgent cases: {sickbay.urgent_case_id - 1}')
-print(f'Treated students: {sickbay.treated_students}')
-print(f'Untreated students: {sickbay.untreated_students}')
+        print(f'{"Total students:":<25}{sickbay.treated_students + sickbay.untreated_students:>25}')
+        print(f'{"Total urgent cases:":<25}{sickbay.urgent_case_id - 1:>25}')
+        print(f'{"Treated students:":<25}{sickbay.treated_students:>25}')
+        print(f'{"Untreated students:":<25}{sickbay.untreated_students:>25}')
+        print('=' * 50)
+
+
+
+sickbay = sickbay_simulation(simpy.Environment(), num_nurses=2)
+sickbay.print_student_list_summary()
+sickbay.print_simulation_summary()
